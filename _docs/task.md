@@ -1,0 +1,39 @@
+# Streamer.bot Export Tool - Web App Conversion
+
+- [x] **Project Setup**
+    - [x] Create `webapp` directory
+    - [x] Create `index.html` skeleton
+    - [x] Create `styles.css` (Dark Theme)
+- [x] **Core Logic (JS)**
+    - [x] Port Decoder logic (Base64 -> Gzip -> JSON)
+    - [x] Port Encoder logic (JSON -> Gzip -> Base64)
+    - [x] Implement Script Extraction/Injection
+- [x] **UI Implementation**
+    - [x] Sidebar & Navigation
+    - [x] Decoder Interface
+    - [x] Encoder Interface
+    - [x] Help & Support Pages
+- [x] **Verification**
+    - [x] Test Decoding with sample data
+    - [x] Test Encoding with sample data
+    - [x] Verify Round-trip (Encode -> Decode)
+- [x] **Documentation**
+    - [x] Create Walkthrough
+- [x] **UI/UX Beautification**
+    - [x] **Visuals**: Implement Glassmorphism & Gradients
+    - [x] **Typography**: Improve fonts & spacing
+    - [x] **Features**: Add Syntax Highlighting (Prism.js)
+    - [x] **Interactions**: Add Toast Notifications & Animations
+- [x] **Ultimate Enhancements**
+    - [x] **Support Page**: Redesign as dedicated tab with social grid
+    - [x] **Features**: Add "Download ZIP" (JSZip)
+    - [x] **PWA**: Add manifest.json for installation
+    - [x] **Stats**: Add Export Analysis Dashboard
+    - [x] **Personalization**: Add Theme Accent Picker
+    - [x] **UX**: Add Global Drag & Drop Overlay
+- [x] **Extreme Visuals & Power Tools**
+    - [x] **Particles**: Interactive background system
+    - [x] **Tilt**: 3D Parallax effect on cards
+    - [x] **Confetti**: Celebration effects
+    - [x] **Editor**: In-browser Code Editing & Re-encoding
+    - [x] **History**: LocalStorage Recent Files
