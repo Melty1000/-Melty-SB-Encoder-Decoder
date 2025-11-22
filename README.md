@@ -1,10 +1,13 @@
-# Streamer.bot Export Tool
+# Streamer.bot Toolkit
 
-This project contains a web-based tool for encoding and decoding Streamer.bot export strings.
+This repository hosts a collection of tools for Streamer.bot.
+
+## Tools Included
+
+### 1. [Encoder & Decoder](docs/encoder/index.html)
+A web-based tool for encoding and decoding Streamer.bot export strings. Allows for extracting C# scripts, editing them, and re-packaging them.
 
 ## How to Host on GitHub Pages
-
-This repository is set up to be easily hosted on GitHub Pages.
 
 1.  **Push to GitHub**: Ensure this repository is pushed to GitHub.
 2.  **Go to Settings**: Navigate to the "Settings" tab of your repository on GitHub.
@@ -14,4 +17,4 @@ This repository is set up to be easily hosted on GitHub Pages.
     *   **Branch**: Select `main` (or `master`) and choose the `/docs` folder.
     *   Click **Save**.
 
-Your site will be live at `https://<your-username>.github.io/<repo-name>/` in a few minutes.
+Your site will be live at `https://<your-username>.github.io/<repo-name>/`.
