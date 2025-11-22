@@ -5,7 +5,8 @@ const state = {
     encoderJson: null,
     encoderScripts: {},
     currentScript: null,   // Currently selected script filename
-    history: []            // Array of { name, date, data }
+    history: [],           // Array of { name, date, data }
+    themeColor: '255, 170, 0' // Default orange RGB
 };
 
 // DOM Elements
@@ -59,7 +60,7 @@ const els = {
 // --- Initialization ---
 initParticles();
 loadHistory();
-initTilt();
+// initTilt(); // Removed 3D effect
 
 // --- Navigation ---
 els.navBtns.forEach(btn => {
@@ -75,6 +76,13 @@ els.navBtns.forEach(btn => {
 });
 
 // --- Theme Picker ---
+const themeColors = {
+    orange: '255, 170, 0',
+    blue: '0, 170, 255',
+    purple: '170, 0, 255',
+    green: '0, 255, 170'
+};
+
 els.themeBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         els.themeBtns.forEach(b => b.classList.remove('active'));
@@ -82,6 +90,9 @@ els.themeBtns.forEach(btn => {
         const theme = btn.dataset.theme;
         document.body.className = ''; // Reset
         if (theme !== 'orange') document.body.classList.add(`theme-${theme}`);
+        
+        // Update particles
+        if (themeColors[theme]) state.themeColor = themeColors[theme];
     });
 });
 
@@ -425,12 +436,7 @@ function triggerConfetti() {
 }
 
 function initTilt() {
-    VanillaTilt.init(document.querySelectorAll("[data-tilt]"), {
-        max: 5,
-        speed: 400,
-        glare: true,
-        "max-glare": 0.2,
-    });
+    // VanillaTilt removed
 }
 
 function initParticles() {
@@ -507,7 +513,7 @@ function initParticles() {
                 const dy = p.y - mouse.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist < 150) {
-                    ctx.strokeStyle = `rgba(255, 170, 0, ${0.2 - dist / 750})`;
+                    ctx.strokeStyle = `rgba(${state.themeColor}, ${0.2 - dist / 750})`;
                     ctx.lineWidth = 0.5;
                     ctx.beginPath();
                     ctx.moveTo(p.x, p.y);

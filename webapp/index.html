@@ -12,7 +12,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
 
     <!-- Icons & Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -85,8 +84,7 @@
                     <p>Extract, Edit, and Re-Encode C# scripts.</p>
                 </header>
 
-                <div class="card input-card" data-tilt data-tilt-max="2" data-tilt-speed="400" data-tilt-glare
-                    data-tilt-max-glare="0.1">
+                <div class="card input-card">
                     <div class="toolbar">
                         <div class="file-input-wrapper">
                             <button class="btn secondary" id="btn-open-file">
@@ -177,7 +175,7 @@
                     <p>Create import strings by injecting C# files into a JSON template.</p>
                 </header>
 
-                <div class="card" data-tilt data-tilt-max="2" data-tilt-speed="400">
+                <div class="card">
                     <div class="step" style="margin-bottom: 30px;">
                         <h3 style="color: var(--accent); margin-bottom: 10px;">1. Base JSON Template</h3>
                         <p style="color: var(--text-sub); margin-bottom: 15px; font-size: 14px;">Select the JSON file
@@ -209,23 +207,100 @@
                     <div class="pane-header" style="background: transparent; padding: 0 0 15px 0; border: none;">
                         <h3 style="color: var(--text-main);">Output</h3>
                         <button class="btn secondary" id="btn-copy-encoded">Copy Output</button>
-                        </header>
-                        <div class="card" data-tilt>
-                            <div class="help-section" style="margin-bottom: 30px;">
-                                <h3 style="color: var(--accent); margin-bottom: 10px;">Decoding an Export</h3>
-                                <p style="color: var(--text-sub); line-height: 1.6;">1. Go to the 'Decoder' tab.<br>
-                                    2. Click 'Open File' or paste the export string.<br>
-                                    3. Click 'DECODE'.<br>
-                                    4. Browse extracted scripts and copy them.</p>
-                            </div>
-                            <div class="help-section">
-                                <h3 style="color: var(--accent); margin-bottom: 10px;">Creating an Export (Encoder)</h3>
-                                <p style="color: var(--text-sub); line-height: 1.6;">1. Create a 'Base JSON' file.<br>
-                                    2. Use <code>"byteCode": "MyScript.cs"</code> in your JSON.<br>
-                                    3. Upload the JSON and the referenced .cs files.<br>
-                                    4. Click 'GENERATE'.</p>
-                            </div>
-                        </div>
+                    </div>
+                    <textarea id="encoder-output" readonly style="height: 150px;"></textarea>
+                </div>
+            </section>
+
+            <!-- SUPPORT PAGE -->
+            <section id="support" class="page">
+                <header class="page-header">
+                    <h2>Support Me</h2>
+                    <p>If you find this tool useful, consider supporting the project!</p>
+                </header>
+
+                <div class="support-grid">
+                    <a href="https://ko-fi.com" target="_blank" class="social-card kofi">
+                        <i class="fa-solid fa-mug-hot"></i>
+                        <span>Buy me a Coffee</span>
+                    </a>
+                    <a href="https://twitch.tv" target="_blank" class="social-card twitch">
+                        <i class="fa-brands fa-twitch"></i>
+                        <span>Twitch</span>
+                    </a>
+                    <a href="https://youtube.com" target="_blank" class="social-card youtube">
+                        <i class="fa-brands fa-youtube"></i>
+                        <span>YouTube</span>
+                    </a>
+                    <a href="https://discord.com" target="_blank" class="social-card discord">
+                        <i class="fa-brands fa-discord"></i>
+                        <span>Discord</span>
+                    </a>
+                    <a href="https://github.com" target="_blank" class="social-card github">
+                        <i class="fa-brands fa-github"></i>
+                        <span>GitHub</span>
+                    </a>
+                    <a href="https://twitter.com" target="_blank" class="social-card twitter">
+                        <i class="fa-brands fa-twitter"></i>
+                        <span>Twitter</span>
+                    </a>
+                </div>
+            </section>
+
+            <!-- HELP PAGE -->
+            <section id="help" class="page">
+                <header class="page-header">
+                    <h2>Help Guide</h2>
+                </header>
+                <div class="card">
+                    <div class="help-section" style="margin-bottom: 30px;">
+                        <h3 style="color: var(--accent); margin-bottom: 10px;">Decoding an Export</h3>
+                        <p style="color: var(--text-sub); line-height: 1.6;">1. Go to the 'Decoder' tab.<br>
+                            2. Click 'Open File' or paste the export string.<br>
+                            3. Click 'DECODE'.<br>
+                            4. Browse extracted scripts and copy them.</p>
+                    </div>
+                    <div class="help-section">
+                        <h3 style="color: var(--accent); margin-bottom: 10px;">Creating an Export (Encoder)</h3>
+                        <p style="color: var(--text-sub); line-height: 1.6;">1. Create a 'Base JSON' file.<br>
+                            2. Use <code>"byteCode": "MyScript.cs"</code> in your JSON.<br>
+                            3. Upload the JSON and the referenced .cs files.<br>
+                            4. Click 'GENERATE'.</p>
+                    </div>
+                    <div class="help-section">
+                        <h3 style="color: var(--accent); margin-bottom: 10px;">JSON Structure Guide</h3>
+                        <p style="color: var(--text-sub); line-height: 1.6; margin-bottom: 15px;">
+                            The JSON file defines the structure of your Streamer.bot export. Here's a breakdown of the
+                            key fields:
+                        </p>
+                        <pre><code class="language-json">{
+  "name": "My Export Name",
+  "description": "Description of what this export does",
+  "author": "Your Name",
+  "version": "1.0.0",
+  "actions": [
+    {
+      "name": "Action Name",
+      "group": "Action Group",
+      "subactions": [
+        {
+          "type": "csharp",
+          "byteCode": "MyScript.cs" // Placeholder for your C# file
+        }
+      ]
+    }
+  ]
+}</code></pre>
+                        <ul style="color: var(--text-sub); margin-top: 15px; margin-left: 20px; line-height: 1.6;">
+                            <li><strong>name</strong>: The name of your export package.</li>
+                            <li><strong>actions</strong>: An array of actions to include.</li>
+                            <li><strong>subactions</strong>: The list of sub-actions within an action.</li>
+                            <li><strong>byteCode</strong>: Use the filename of your .cs file (e.g.,
+                                <code>"script.cs"</code>). The Encoder will replace this with the compiled hex code.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </section>
         </main>
 

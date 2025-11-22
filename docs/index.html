@@ -4,158 +4,316 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Streamer.bot Toolkit</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>Streamer.bot Export Tool</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- Icons & Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --bg: #0f0f13;
-            --card-bg: #1a1a20;
-            --text: #ffffff;
-            --text-sub: #a0a0b0;
-            --accent: #6c5ce7;
-            --accent-hover: #5b4cc4;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding: 40px 20px;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 60px;
-        }
-
-        h1 {
-            font-size: 3rem;
-            font-weight: 800;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #fff 0%, #a0a0b0 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        p.subtitle {
-            color: var(--text-sub);
-            font-size: 1.2rem;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            width: 100%;
-            max-width: 1000px;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 30px;
-            transition: transform 0.2s, box-shadow 0.2s;
-            text-decoration: none;
-            color: inherit;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            border-color: var(--accent);
-        }
-
-        .icon-box {
-            width: 50px;
-            height: 50px;
-            background: rgba(108, 92, 231, 0.1);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-            color: var(--accent);
-            font-size: 1.5rem;
-        }
-
-        .card h2 {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-        }
-
-        .card p {
-            color: var(--text-sub);
-            line-height: 1.5;
-            font-size: 0.95rem;
-        }
-
-        .card .arrow {
-            margin-top: 20px;
-            color: var(--accent);
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        footer {
-            margin-top: auto;
-            padding-top: 60px;
-            color: var(--text-sub);
-            font-size: 0.9rem;
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Consolas&display=swap"
+        rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
 </head>
 
 <body>
+    <!-- Particle Background -->
+    <canvas id="particles-canvas"></canvas>
 
-    <header>
-        <h1>Streamer.bot Toolkit</h1>
-        <p class="subtitle">A collection of utilities for Streamer.bot users.</p>
-    </header>
-
-    <div class="grid">
-        <!-- Tool 1 -->
-        <a href="encoder/index.html" class="card">
-            <div class="icon-box">
-                <i class="fa-solid fa-code"></i>
-            </div>
-            <h2>Export Encoder & Decoder</h2>
-            <p>Extract C# scripts from export strings, edit them, and re-encode them back into importable strings.</p>
-            <div class="arrow">Launch Tool <i class="fa-solid fa-arrow-right"></i></div>
-        </a>
-
-        <!-- Placeholder for future tools -->
-        <!-- 
-        <a href="#" class="card" style="opacity: 0.5; cursor: default;">
-            <div class="icon-box">
-                <i class="fa-solid fa-wrench"></i>
-            </div>
-            <h2>Coming Soon</h2>
-            <p>More tools are being built. Stay tuned!</p>
-        </a> 
-        -->
+    <!-- Drag & Drop Overlay -->
+    <div id="drop-overlay" class="hidden">
+        <div class="drop-content">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <h2>Drop File Here</h2>
+        </div>
     </div>
 
-    <footer>
-        <p>Created by Melty</p>
-    </footer>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <h1>SB TOOL</h1>
+                <span class="version">v3.0 Extreme</span>
+            </div>
 
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-target="decoder">
+                    <i class="fa-solid fa-folder-open"></i> Decoder
+                </button>
+                <button class="nav-btn" data-target="encoder">
+                    <i class="fa-solid fa-box-archive"></i> Encoder
+                </button>
+                <button class="nav-btn" data-target="support">
+                    <i class="fa-solid fa-heart"></i> Support Me
+                </button>
+                <button class="nav-btn" data-target="help">
+                    <i class="fa-solid fa-circle-question"></i> Help Guide
+                </button>
+            </nav>
+
+            <!-- Theme Picker -->
+            <div class="theme-picker">
+                <p>Theme</p>
+                <div class="theme-options">
+                    <button class="theme-btn active" data-theme="orange" style="background: #ffaa00;"></button>
+                    <button class="theme-btn" data-theme="blue" style="background: #00aaff;"></button>
+                    <button class="theme-btn" data-theme="purple" style="background: #aa00ff;"></button>
+                    <button class="theme-btn" data-theme="green" style="background: #00ffaa;"></button>
+                </div>
+            </div>
+
+            <!-- History -->
+            <div class="history-section">
+                <p>Recent Exports</p>
+                <ul id="history-list">
+                    <!-- History items -->
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <!-- DECODER PAGE -->
+            <section id="decoder" class="page active">
+                <header class="page-header">
+                    <h2>Decoder</h2>
+                    <p>Extract, Edit, and Re-Encode C# scripts.</p>
+                </header>
+
+                <div class="card input-card">
+                    <div class="toolbar">
+                        <div class="file-input-wrapper">
+                            <button class="btn secondary" id="btn-open-file">
+                                <i class="fa-solid fa-file-import"></i> Open File
+                            </button>
+                            <input type="file" id="file-upload-decoder" accept=".txt" hidden>
+                        </div>
+                        <button class="btn primary" id="btn-decode">
+                            <i class="fa-solid fa-play"></i> DECODE
+                        </button>
+                    </div>
+                    <textarea id="decoder-input" placeholder="Paste export string here..."></textarea>
+                </div>
+
+                <!-- Stats Dashboard -->
+                <div class="stats-grid hidden" id="stats-dashboard">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-bolt"></i>
+                        <span id="stat-actions">0</span>
+                        <label>Actions</label>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-code"></i>
+                        <span id="stat-scripts">0</span>
+                        <label>Scripts</label>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-fingerprint"></i>
+                        <span id="stat-triggers">0</span>
+                        <label>Triggers</label>
+                    </div>
+                </div>
+
+                <div class="card output-card hidden" id="decoder-output-area">
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="scripts">C# Scripts</button>
+                        <button class="tab-btn" data-tab="json">JSON Data</button>
+                    </div>
+
+                    <div class="tab-content active" id="tab-scripts">
+                        <div class="split-view">
+                            <div class="list-pane">
+                                <div class="search-box">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    <input type="text" id="script-search" placeholder="Search scripts...">
+                                </div>
+                                <ul id="script-list">
+                                    <!-- Scripts will be listed here -->
+                                </ul>
+                                <div class="list-actions">
+                                    <button class="btn secondary full-width" id="btn-download-zip">
+                                        <i class="fa-solid fa-file-zipper"></i> Download ZIP
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="code-pane">
+                                <div class="pane-header">
+                                    <span>Code Editor</span>
+                                    <div class="pane-actions">
+                                        <button class="btn small primary" id="btn-re-encode">
+                                            <i class="fa-solid fa-rotate"></i> Re-Encode
+                                        </button>
+                                        <button class="btn small secondary" id="btn-copy-code">Copy</button>
+                                    </div>
+                                </div>
+                                <div class="editor-wrapper">
+                                    <textarea id="code-editor" spellcheck="false"></textarea>
+                                    <pre><code id="code-preview" class="language-csharp"></code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="tab-json">
+                        <div class="pane-header">
+                            <span>JSON Structure</span>
+                            <button class="btn small secondary" id="btn-copy-json">Copy JSON</button>
+                        </div>
+                        <pre><code id="json-preview" class="language-json"></code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ENCODER PAGE -->
+            <section id="encoder" class="page">
+                <header class="page-header">
+                    <h2>Encoder</h2>
+                    <p>Create import strings by injecting C# files into a JSON template.</p>
+                </header>
+
+                <div class="card">
+                    <div class="step" style="margin-bottom: 30px;">
+                        <h3 style="color: var(--accent); margin-bottom: 10px;">1. Base JSON Template</h3>
+                        <p style="color: var(--text-sub); margin-bottom: 15px; font-size: 14px;">Select the JSON file
+                            defining your actions. Use <code>"byteCode": "filename.cs"</code> placeholders.</p>
+                        <div class="file-row" style="display: flex; gap: 10px;">
+                            <input type="text" id="encoder-json-path" placeholder="No file selected" readonly>
+                            <button class="btn secondary" id="btn-browse-json">Browse</button>
+                            <input type="file" id="file-upload-json" accept=".json" hidden>
+                        </div>
+                    </div>
+
+                    <div class="step" style="margin-bottom: 30px;">
+                        <h3 style="color: var(--accent); margin-bottom: 10px;">2. Scripts</h3>
+                        <p style="color: var(--text-sub); margin-bottom: 15px; font-size: 14px;">Select the .cs files
+                            referenced in your JSON.</p>
+                        <div class="file-row" style="display: flex; gap: 10px;">
+                            <input type="text" id="encoder-scripts-count" placeholder="No files selected" readonly>
+                            <button class="btn secondary" id="btn-browse-scripts">Browse</button>
+                            <input type="file" id="file-upload-scripts" accept=".cs" multiple hidden>
+                        </div>
+                    </div>
+
+                    <button class="btn primary full-width" id="btn-encode">
+                        <i class="fa-solid fa-bolt"></i> GENERATE IMPORT STRING
+                    </button>
+                </div>
+
+                <div class="card output-card hidden" id="encoder-output-area">
+                    <div class="pane-header" style="background: transparent; padding: 0 0 15px 0; border: none;">
+                        <h3 style="color: var(--text-main);">Output</h3>
+                        <button class="btn secondary" id="btn-copy-encoded">Copy Output</button>
+                    </div>
+                    <textarea id="encoder-output" readonly style="height: 150px;"></textarea>
+                </div>
+            </section>
+
+            <!-- SUPPORT PAGE -->
+            <section id="support" class="page">
+                <header class="page-header">
+                    <h2>Support Me</h2>
+                    <p>If you find this tool useful, consider supporting the project!</p>
+                </header>
+
+                <div class="support-grid">
+                    <a href="https://ko-fi.com" target="_blank" class="social-card kofi">
+                        <i class="fa-solid fa-mug-hot"></i>
+                        <span>Buy me a Coffee</span>
+                    </a>
+                    <a href="https://twitch.tv" target="_blank" class="social-card twitch">
+                        <i class="fa-brands fa-twitch"></i>
+                        <span>Twitch</span>
+                    </a>
+                    <a href="https://youtube.com" target="_blank" class="social-card youtube">
+                        <i class="fa-brands fa-youtube"></i>
+                        <span>YouTube</span>
+                    </a>
+                    <a href="https://discord.com" target="_blank" class="social-card discord">
+                        <i class="fa-brands fa-discord"></i>
+                        <span>Discord</span>
+                    </a>
+                    <a href="https://github.com" target="_blank" class="social-card github">
+                        <i class="fa-brands fa-github"></i>
+                        <span>GitHub</span>
+                    </a>
+                    <a href="https://twitter.com" target="_blank" class="social-card twitter">
+                        <i class="fa-brands fa-twitter"></i>
+                        <span>Twitter</span>
+                    </a>
+                </div>
+            </section>
+
+            <!-- HELP PAGE -->
+            <section id="help" class="page">
+                <header class="page-header">
+                    <h2>Help Guide</h2>
+                </header>
+                <div class="card">
+                    <div class="help-section" style="margin-bottom: 30px;">
+                        <h3 style="color: var(--accent); margin-bottom: 10px;">Decoding an Export</h3>
+                        <p style="color: var(--text-sub); line-height: 1.6;">1. Go to the 'Decoder' tab.<br>
+                            2. Click 'Open File' or paste the export string.<br>
+                            3. Click 'DECODE'.<br>
+                            4. Browse extracted scripts and copy them.</p>
+                    </div>
+                    <div class="help-section">
+                        <h3 style="color: var(--accent); margin-bottom: 10px;">Creating an Export (Encoder)</h3>
+                        <p style="color: var(--text-sub); line-height: 1.6;">1. Create a 'Base JSON' file.<br>
+                            2. Use <code>"byteCode": "MyScript.cs"</code> in your JSON.<br>
+                            3. Upload the JSON and the referenced .cs files.<br>
+                            4. Click 'GENERATE'.</p>
+                    </div>
+                    <div class="help-section">
+                        <h3 style="color: var(--accent); margin-bottom: 10px;">JSON Structure Guide</h3>
+                        <p style="color: var(--text-sub); line-height: 1.6; margin-bottom: 15px;">
+                            The JSON file defines the structure of your Streamer.bot export. Here's a breakdown of the
+                            key fields:
+                        </p>
+                        <pre><code class="language-json">{
+  "name": "My Export Name",
+  "description": "Description of what this export does",
+  "author": "Your Name",
+  "version": "1.0.0",
+  "actions": [
+    {
+      "name": "Action Name",
+      "group": "Action Group",
+      "subactions": [
+        {
+          "type": "csharp",
+          "byteCode": "MyScript.cs" // Placeholder for your C# file
+        }
+      ]
+    }
+  ]
+}</code></pre>
+                        <ul style="color: var(--text-sub); margin-top: 15px; margin-left: 20px; line-height: 1.6;">
+                            <li><strong>name</strong>: The name of your export package.</li>
+                            <li><strong>actions</strong>: An array of actions to include.</li>
+                            <li><strong>subactions</strong>: The list of sub-actions within an action.</li>
+                            <li><strong>byteCode</strong>: Use the filename of your .cs file (e.g.,
+                                <code>"script.cs"</code>). The Encoder will replace this with the compiled hex code.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Toast Container -->
+        <div id="toast-container"></div>
+    </div>
+
+    <!-- Prism JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+
+    <script src="app.js"></script>
 </body>
 
 </html>
