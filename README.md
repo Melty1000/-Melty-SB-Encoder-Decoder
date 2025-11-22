@@ -1,10 +1,10 @@
-# Streamer.bot Toolkit
+# Streamer.bot Export Tool
 
-This repository hosts a collection of tools for Streamer.bot.
+This project contains a web-based tool for encoding and decoding Streamer.bot export strings.
 
 ## Tools Included
 
-### 1. [Encoder & Decoder](docs/encoder/index.html)
+### [Encoder & Decoder](https://melty1000.github.io/-Melty-SB-Encoder-Decoder/)
 A web-based tool for encoding and decoding Streamer.bot export strings. Allows for extracting C# scripts, editing them, and re-packaging them.
 
 ## How to Host on GitHub Pages
@@ -14,7 +14,7 @@ A web-based tool for encoding and decoding Streamer.bot export strings. Allows f
 3.  **Pages**: In the left sidebar, click on "Pages".
 4.  **Build and deployment**:
     *   **Source**: Select "Deploy from a branch".
-    *   **Branch**: Select `main` (or `master`) and choose the `/docs` folder.
+    *   **Branch**: Select `master` and choose the `/docs` folder.
     *   Click **Save**.
 
-Your site will be live at `https://<your-username>.github.io/<repo-name>/`.
+Your site will be live at `https://melty1000.github.io/-Melty-SB-Encoder-Decoder/`.
