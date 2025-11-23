@@ -90,7 +90,7 @@ els.themeBtns.forEach(btn => {
         const theme = btn.dataset.theme;
         document.body.className = ''; // Reset
         if (theme !== 'orange') document.body.classList.add(`theme-${theme}`);
-        
+
         // Update particles
         if (themeColors[theme]) state.themeColor = themeColors[theme];
     });
@@ -348,8 +348,22 @@ els.btnReEncode.addEventListener('click', () => {
                     // Let's just iterate our state and see if we can find a match.
 
                     for (const [fname, content] of Object.entries(state.extractedScripts)) {
-                        // If the filename roughly matches the object name
-                        if (fname.includes(safeName.replace('.cs', ''))) {
+                        // Strict check: exact match or match with _n suffix
+                        // We need to handle the fact that we added .cs to the name when extracting
+                        // Original name: "Test" -> Extracted: "Test.cs"
+                        // Original name: "Test" (duplicate) -> Extracted: "Test_1.cs"
+
+                        const baseName = safeName.replace('.cs', '');
+                        const fnameBase = fname.replace('.cs', '');
+
+                        // Check for exact match
+                        if (fname === safeName) {
+                            obj.byteCode = btoa(content);
+                        }
+                        // Check for indexed match (e.g. Test_1.cs matches Test if we are on the right index?)
+                        // Actually, the logic below is still flawed for duplicates because we don't know WHICH duplicate we are at.
+                        // But it fixes the "Test" matching "Test2" issue.
+                        else if (fnameBase === baseName) {
                             obj.byteCode = btoa(content);
                         }
                     }
@@ -375,7 +389,14 @@ els.btnReEncode.addEventListener('click', () => {
 
         // Show result
         els.decoderInput.value = result;
-        showToast('Re-Encoded! Input updated.', 'success');
+
+        // Update State & JSON Preview
+        state.currentJsonData = data;
+        els.jsonPreview.textContent = JSON.stringify(data, null, 4);
+        Prism.highlightElement(els.jsonPreview);
+        updateStats(data);
+
+        showToast('Re-Encoded! Input & JSON updated.', 'success');
         triggerConfetti();
 
     } catch (e) {
