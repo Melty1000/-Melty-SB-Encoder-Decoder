@@ -550,13 +550,20 @@ function initParticles() {
 }
 
 // --- Utilities ---
+// --- Utilities ---
 function showToast(msg, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    toast.innerHTML = `
-        <i class="fa-solid ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-circle-exclamation' : 'fa-info-circle'}"></i>
-        <span>${msg}</span>
-    `;
+
+    const icon = document.createElement('i');
+    icon.className = `fa-solid ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-circle-exclamation' : 'fa-info-circle'}`;
+
+    const text = document.createElement('span');
+    text.textContent = msg;
+
+    toast.appendChild(icon);
+    toast.appendChild(text);
+
     els.toastContainer.appendChild(toast);
     setTimeout(() => {
         toast.style.animation = 'fadeOut 0.3s forwards';
@@ -574,9 +581,9 @@ document.getElementById('btn-copy-json').onclick = () => {
     showToast('JSON copied', 'success');
 };
 document.getElementById('btn-copy-encoded').onclick = () => {
-    els.encoderOutput.select();
-    document.execCommand('copy');
-    showToast('Import string copied', 'success');
+    navigator.clipboard.writeText(els.encoderOutput.value)
+        .then(() => showToast('Import string copied', 'success'))
+        .catch(() => showToast('Failed to copy', 'error'));
 };
 
 // Tabs
