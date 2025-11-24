@@ -268,52 +268,18 @@
                             4. Click 'GENERATE'.</p>
                     </div>
                     <div class="help-section">
-                        <h3 style="color: var(--accent); margin-bottom: 10px;">JSON Structure Guide</h3>
-                        <p style="color: var(--text-sub); line-height: 1.6; margin-bottom: 15px;">
-                            The JSON file defines the structure of your Streamer.bot export. Here's a breakdown of the
-                            key fields:
-                        </p>
-                        <pre><code class="language-json">{
-  "name": "My Export Name",
-  "description": "Description of what this export does",
-  "author": "Your Name",
-  "version": "1.0.0",
-  "actions": [
-    {
-      "name": "Action Name",
-      "group": "Action Group",
-      "subactions": [
-        {
-          "type": "csharp",
-          "byteCode": "MyScript.cs" // Placeholder for your C# file
-        }
-      ]
-    }
-  ]
-}</code></pre>
-                        <ul style="color: var(--text-sub); margin-top: 15px; margin-left: 20px; line-height: 1.6;">
-                            <li><strong>name</strong>: The name of your export package.</li>
-                            <li><strong>actions</strong>: An array of actions to include.</li>
-                            <li><strong>subactions</strong>: The list of sub-actions within an action.</li>
-                            <li><strong>byteCode</strong>: Use the filename of your .cs file (e.g.,
-                                <code>"script.cs"</code>). The Encoder will replace this with the compiled hex code.
-                            </li>
-                        </ul>
+                        <!-- Toast Container -->
+                        <div id="toast-container"></div>
                     </div>
-                </div>
-            </section>
-        </main>
 
-        <!-- Toast Container -->
-        <div id="toast-container"></div>
-    </div>
+                    <!-- Prism JS -->
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+                    <script
+                        src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+                    <script
+                        src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
 
-    <!-- Prism JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
-
-    <script src="app.js"></script>
+                    <script src="app.js"></script>
 </body>
 
 </html>

@@ -193,6 +193,7 @@ function onDecodeSuccess(data) {
     updateScriptList();
     updateStats(data);
 
+    triggerConfetti();
     showToast(`Success! Found ${Object.keys(state.extractedScripts).length} scripts.`, 'success');
 }
 
@@ -655,4 +656,18 @@ function injectScriptsRecursive(obj, count = 0) {
         for (const key in obj) count = injectScriptsRecursive(obj[key], count);
     }
     return count;
+}
+
+// Confetti
+function triggerConfetti() {
+    const rgb = state.themeColor.split(',').map(x => parseInt(x.trim()));
+    const hex = '#' + ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1);
+
+    confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: [hex, '#ffffff'],
+        disableForReducedMotion: true
+    });
 }
