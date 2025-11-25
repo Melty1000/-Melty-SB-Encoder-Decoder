@@ -94,8 +94,8 @@
                         </div>
                         <button class="btn primary" id="btn-decode">
                             <i class="fa-solid fa-play"></i> DECODE
-                        </button>
                     </div>
+
                     <textarea id="decoder-input" placeholder="Paste export string here..."></textarea>
                 </div>
 
@@ -103,18 +103,45 @@
                 <div class="stats-grid hidden" id="stats-dashboard">
                     <div class="stat-card">
                         <i class="fa-solid fa-bolt"></i>
-                        <span id="stat-actions">0</span>
-                        <label>Actions</label>
+                        <div class="stat-info">
+                            <span id="stat-actions">0</span>
+                            <label>Actions</label>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <div class="stat-info">
+                            <span id="stat-subactions">0</span>
+                            <label>Sub-Actions</label>
+                        </div>
                     </div>
                     <div class="stat-card">
                         <i class="fa-solid fa-code"></i>
-                        <span id="stat-scripts">0</span>
-                        <label>Scripts</label>
+                        <div class="stat-info">
+                            <span id="stat-scripts">0</span>
+                            <label>C# Scripts</label>
+                        </div>
                     </div>
                     <div class="stat-card">
                         <i class="fa-solid fa-fingerprint"></i>
-                        <span id="stat-triggers">0</span>
-                        <label>Triggers</label>
+                        <div class="stat-info">
+                            <span id="stat-triggers">0</span>
+                            <label>Triggers</label>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-terminal"></i>
+                        <div class="stat-info">
+                            <span id="stat-commands">0</span>
+                            <label>Commands</label>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-clock"></i>
+                        <div class="stat-info">
+                            <span id="stat-timed-actions">0</span>
+                            <label>Timed Actions</label>
+                        </div>
                     </div>
                 </div>
 

@@ -14,7 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <!-- Icons & Fonts -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Consolas&display=swap"
         rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
@@ -94,8 +94,8 @@
                         </div>
                         <button class="btn primary" id="btn-decode">
                             <i class="fa-solid fa-play"></i> DECODE
-                        </button>
                     </div>
+
                     <textarea id="decoder-input" placeholder="Paste export string here..."></textarea>
                 </div>
 
@@ -103,18 +103,45 @@
                 <div class="stats-grid hidden" id="stats-dashboard">
                     <div class="stat-card">
                         <i class="fa-solid fa-bolt"></i>
-                        <span id="stat-actions">0</span>
-                        <label>Actions</label>
+                        <div class="stat-info">
+                            <span id="stat-actions">0</span>
+                            <label>Actions</label>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <div class="stat-info">
+                            <span id="stat-subactions">0</span>
+                            <label>Sub-Actions</label>
+                        </div>
                     </div>
                     <div class="stat-card">
                         <i class="fa-solid fa-code"></i>
-                        <span id="stat-scripts">0</span>
-                        <label>Scripts</label>
+                        <div class="stat-info">
+                            <span id="stat-scripts">0</span>
+                            <label>C# Scripts</label>
+                        </div>
                     </div>
                     <div class="stat-card">
                         <i class="fa-solid fa-fingerprint"></i>
-                        <span id="stat-triggers">0</span>
-                        <label>Triggers</label>
+                        <div class="stat-info">
+                            <span id="stat-triggers">0</span>
+                            <label>Triggers</label>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-terminal"></i>
+                        <div class="stat-info">
+                            <span id="stat-commands">0</span>
+                            <label>Commands</label>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-clock"></i>
+                        <div class="stat-info">
+                            <span id="stat-timed-actions">0</span>
+                            <label>Timed Actions</label>
+                        </div>
                     </div>
                 </div>
 
@@ -220,29 +247,29 @@
                 </header>
 
                 <div class="support-grid">
-                    <a href="https://ko-fi.com" target="_blank" class="social-card kofi">
+                    <a href="https://ko-fi.com/melty1000" target="_blank" class="social-card kofi">
                         <i class="fa-solid fa-mug-hot"></i>
                         <span>Buy me a Coffee</span>
                     </a>
-                    <a href="https://twitch.tv" target="_blank" class="social-card twitch">
+                    <a href="https://www.twitch.tv/melty1000" target="_blank" class="social-card twitch">
                         <i class="fa-brands fa-twitch"></i>
                         <span>Twitch</span>
                     </a>
-                    <a href="https://youtube.com" target="_blank" class="social-card youtube">
+                    <a href="https://www.youtube.com/@melty_1000" target="_blank" class="social-card youtube">
                         <i class="fa-brands fa-youtube"></i>
                         <span>YouTube</span>
                     </a>
-                    <a href="https://discord.com" target="_blank" class="social-card discord">
+                    <a href="https://discord.gg/8EfuxXgVyT" target="_blank" class="social-card discord">
                         <i class="fa-brands fa-discord"></i>
                         <span>Discord</span>
                     </a>
-                    <a href="https://github.com" target="_blank" class="social-card github">
+                    <a href="https://github.com/Melty1000" target="_blank" class="social-card github">
                         <i class="fa-brands fa-github"></i>
                         <span>GitHub</span>
                     </a>
-                    <a href="https://twitter.com" target="_blank" class="social-card twitter">
-                        <i class="fa-brands fa-twitter"></i>
-                        <span>Twitter</span>
+                    <a href="https://x.com/melty1000" target="_blank" class="social-card x">
+                        <i class="fa-brands fa-x-twitter"></i>
+                        <span>X / Twitter</span>
                     </a>
                 </div>
             </section>
@@ -254,32 +281,419 @@
                 </header>
                 <div class="card">
                     <div class="help-section" style="margin-bottom: 30px;">
-                        <h3 style="color: var(--accent); margin-bottom: 10px;">Decoding an Export</h3>
-                        <p style="color: var(--text-sub); line-height: 1.6;">1. Go to the 'Decoder' tab.<br>
-                            2. Click 'Open File' or paste the export string.<br>
-                            3. Click 'DECODE'.<br>
-                            4. Browse extracted scripts and copy them.</p>
-                    </div>
-                    <div class="help-section">
-                        <h3 style="color: var(--accent); margin-bottom: 10px;">Creating an Export (Encoder)</h3>
-                        <p style="color: var(--text-sub); line-height: 1.6;">1. Create a 'Base JSON' file.<br>
-                            2. Use <code>"byteCode": "MyScript.cs"</code> in your JSON.<br>
-                            3. Upload the JSON and the referenced .cs files.<br>
-                            4. Click 'GENERATE'.</p>
-                    </div>
-                    <div class="help-section">
-                        <!-- Toast Container -->
-                        <div id="toast-container"></div>
+                        <h3 style="color: var(--accent); margin-bottom: 10px;">Documentation & Reference</h3>
+                        <p style="color: var(--text-sub); line-height: 1.6;">
+                            Comprehensive technical reference for the Streamer.bot export format. Use this when
+                            generating or editing JSON manually.
+                        </p>
                     </div>
 
-                    <!-- Prism JS -->
-                    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-                    <script
-                        src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
-                    <script
-                        src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+                    <div class="help-section" style="border-top: 1px solid var(--border); padding-top: 20px;">
+                        <h4 style="color: var(--text-main); margin-bottom: 15px;">1. Root Structure</h4>
+                        <pre><code class="language-json">{
+    "meta": {
+        "name": "Export Name",
+        "author": "Author Name",
+        "version": "1.0.0",
+        "description": "Description"
+    },
+    "data": {
+        "actions": [ ... ]
+    }
+}</code></pre>
+                    </div>
 
-                    <script src="app.js"></script>
+                    <div class="help-section"
+                        style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px;">
+                        <h4 style="color: var(--text-main); margin-bottom: 15px;">2. Action Structure</h4>
+                        <p style="color: var(--text-sub); margin-bottom: 10px;">Each action in
+                            <code>data.actions[]</code> has these fields:
+                        </p>
+                        <ul
+                            style="color: var(--text-sub); font-size: 13px; margin-left: 20px; margin-bottom: 15px; line-height: 1.8;">
+                            <li><code>id</code>: Unique GUID identifier</li>
+                            <li><code>name</code>: Display name in Streamer.bot</li>
+                            <li><code>group</code>: Category/folder name</li>
+                            <li><code>enabled</code>: Boolean to enable/disable action</li>
+                            <li><code>queue</code>: Queue ID for execution order (use
+                                <code>00000000-0000-0000-0000-000000000000</code> for default)
+                            </li>
+                            <li><code>alwaysRun</code>: If true, runs even if action is disabled</li>
+                            <li><code>concurrent</code>: If true, allows multiple instances to run
+                                simultaneously</li>
+                            <li><code>randomAction</code>: If true, picks random sub-action to execute</li>
+                            <li><code>triggers[]</code>: Array of events that start this action</li>
+                            <li><code>subActions[]</code>: Array of steps to execute</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section"
+                        style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px;">
+                        <h4 style="color: var(--text-main); margin-bottom: 15px;">3. Triggers Reference</h4>
+                        <p style="color: var(--text-sub); margin-bottom: 10px;">All triggers have
+                            <code>id</code>,
+                            <code>type</code>, <code>enabled</code>, and <code>exclusions[]</code>.
+                        </p>
+                        <table
+                            style="width: 100%; text-align: left; color: var(--text-sub); font-size: 13px; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border); color: var(--accent);">
+                                    <th style="padding: 8px;">Type</th>
+                                    <th style="padding: 8px;">Name</th>
+                                    <th style="padding: 8px;">Extra Fields</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding: 8px;">101</td>
+                                    <td>Twitch Follow</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">102</td>
+                                    <td>Twitch Cheer</td>
+                                    <td><code>min</code>, <code>max</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">103</td>
+                                    <td>Twitch Sub</td>
+                                    <td><code>tiers</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">104</td>
+                                    <td>Twitch ReSub</td>
+                                    <td><code>tiers</code>, <code>min</code>, <code>max</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">105</td>
+                                    <td>Twitch Gift Sub</td>
+                                    <td><code>tiers</code>, <code>min</code>, <code>max</code>,
+                                        <code>monthsGifted</code>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">106</td>
+                                    <td>Twitch Gift Bomb</td>
+                                    <td><code>tiers</code>, <code>min</code>, <code>max</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">107</td>
+                                    <td>Twitch Raid</td>
+                                    <td><code>min</code>, <code>max</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">112</td>
+                                    <td>Reward Redemption</td>
+                                    <td><code>rewardId</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">120</td>
+                                    <td>First Words</td>
+                                    <td><code>username</code>, <code>isUserId</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">302</td>
+                                    <td>Chat Command</td>
+                                    <td><code>commandId</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">401</td>
+                                    <td>Command (Alt)</td>
+                                    <td><code>commandId</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">701</td>
+                                    <td>Timer</td>
+                                    <td><code>timerId</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">702</td>
+                                    <td>Action</td>
+                                    <td><code>variables</code> (object)</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">14004</td>
+                                    <td>OBS Scene Changed</td>
+                                    <td><code>obsId</code>, <code>sceneName</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">16001</td>
+                                    <td>Hotkey Press</td>
+                                    <td><code>keyCode</code>, <code>mask</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">18001</td>
+                                    <td>Streamer.bot Event</td>
+                                    <td><code>eventName</code> (e.g. "unfollowCheck")</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">18002</td>
+                                    <td>Custom Event</td>
+                                    <td><code>eventName</code>, <code>name</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="help-section"
+                        style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px;">
+                        <h4 style="color: var(--text-main); margin-bottom: 15px;">4. Sub-Actions Reference</h4>
+                        <p style="color: var(--text-sub); margin-bottom: 10px;"><strong>Common Fields:</strong>
+                            All
+                            sub-actions have <code>id</code>, <code>type</code>, <code>enabled</code>,
+                            <code>index</code>, <code>weight</code>, <code>parentId</code>.
+                        </p>
+
+                        <h5 style="color: var(--accent); margin: 15px 0 10px 0; font-size: 14px;">General & Chat
+                        </h5>
+                        <table
+                            style="width: 100%; text-align: left; color: var(--text-sub); font-size: 12px; border-collapse: collapse; margin-bottom: 15px;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border); color: var(--accent);">
+                                    <th style="padding: 6px;">Type</th>
+                                    <th style="padding: 6px;">Name</th>
+                                    <th style="padding: 6px;">Key Fields</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding: 6px;">10</td>
+                                    <td>Send Message</td>
+                                    <td><code>text</code>, <code>useBot</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px;">560</td>
+                                    <td>Reply to Message</td>
+                                    <td><code>text</code>, <code>replyId</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px;">1</td>
+                                    <td>Play Sound</td>
+                                    <td><code>soundFile</code>, <code>volume</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px;">1002</td>
+                                    <td>Delay</td>
+                                    <td><code>value</code> (ms)</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px;">4</td>
+                                    <td>Run Action</td>
+                                    <td><code>actionId</code>, <code>runImmedately</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px;">99999</td>
+                                    <td>C# Code</td>
+                                    <td><code>byteCode</code>, <code>references</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h5 style="color: var(--accent); margin: 15px 0 10px 0; font-size: 14px;">OBS Studio
+                        </h5>
+                        <table
+                            style="width: 100%; text-align: left; color: var(--text-sub); font-size: 12px; border-collapse: collapse; margin-bottom: 15px;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border); color: var(--accent);">
+                                    <th style="padding: 6px;">Type</th>
+                                    <th style="padding: 6px;">Name</th>
+                                    <th style="padding: 6px;">Key Fields</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding: 6px;">30</td>
+                                    <td>Set Source State</td>
+                                    <td><code>sceneName</code>, <code>sourceName</code>, <code>state</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px;">49</td>
+                                    <td>Set Source Visibility</td>
+                                    <td><code>sceneName</code>, <code>sourceName</code>, <code>state</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px;">47</td>
+                                    <td>Set Filter State</td>
+                                    <td><code>sceneName</code>, <code>filterName</code>, <code>state</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px;">39</td>
+                                    <td>Set Text (GDI+)</td>
+                                    <td><code>sceneName</code>, <code>sourceName</code>, <code>text</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px;">38</td>
+                                    <td>Set Image URL</td>
+                                    <td><code>sceneName</code>, <code>sourceName</code>, <code>url</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px;">46</td>
+                                    <td>Raw OBS Request</td>
+                                    <td><code>requestType</code>, <code>requestData</code> (json string)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h5 style="color: var(--accent); margin: 15px 0 10px 0; font-size: 14px;">Logic &
+                            Variables</h5>
+                        <table
+                            style="width: 100%; text-align: left; color: var(--text-sub); font-size: 12px; border-collapse: collapse; margin-bottom: 15px;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border); color: var(--accent);">
+                                    <th style="padding: 6px;">Type</th>
+                                    <th style="padding: 6px;">Name</th>
+                                    <th style="padding: 6px;">Key Fields</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding: 6px;">123</td>
+                                    <td>Set Variable</td>
+                                    <td><code>variableName</code>, <code>value</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px;">120</td>
+                                    <td>If Statement</td>
+                                    <td><code>input</code>, <code>operation</code>, <code>value</code>,
+                                        <code>subActions[]</code>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px;">99900</td>
+                                    <td>Random Group</td>
+                                    <td><code>name</code>, <code>random</code>, <code>subActions[]</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px;">99901</td>
+                                    <td>If Branch</td>
+                                    <td><code>subActions[]</code> (inside Type 120)</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px;">99902</td>
+                                    <td>Else Branch</td>
+                                    <td><code>subActions[]</code> (inside Type 120)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <p style="color: var(--text-sub); font-size: 13px; margin-bottom: 10px;"><strong>OBS
+                                State
+                                Values:</strong></p>
+                        <ul style="color: var(--text-sub); font-size: 13px; margin-left: 20px; margin-bottom: 15px;">
+                            <li><code>0</code> = Hide/Disable</li>
+                            <li><code>1</code> = Show/Enable</li>
+                            <li><code>2</code> = Toggle</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section"
+                        style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px;">
+                        <h4 style="color: var(--text-main); margin-bottom: 15px;">5. Nested Sub-Actions</h4>
+                        <p style="color: var(--text-sub); margin-bottom: 10px;">Logic groups (If/Else, Random)
+                            contain
+                            nested <code>subActions[]</code>. Use <code>parentId</code> to link children to
+                            their parent
+                            group.</p>
+                        <pre
+                            style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; color: var(--text-sub); font-size: 12px;"><code class="language-json">{
+  "type": 120,
+  "input": "%firstMessage%",
+  "operation": 0,
+  "value": "false",
+  "subActions": [
+    {
+      "type": 99901,
+      "parentId": "parent-guid",
+      "subActions": [...]
+    },
+    {
+      "type": 99902,
+      "parentId": "parent-guid",
+      "subActions": []
+    }
+  ]
+}</code></pre>
+                    </div>
+
+                    <div class="help-section"
+                        style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px;">
+                        <h4 style="color: var(--text-main); margin-bottom: 15px;">6. Variables</h4>
+                        <p style="color: var(--text-sub); margin-bottom: 10px;">Use <code>%variableName%</code>
+                            syntax
+                            in text fields. Common variables:</p>
+                        <ul
+                            style="color: var(--text-sub); font-size: 13px; margin-left: 20px; margin-bottom: 15px; line-height: 1.6;">
+                            <li><code>%userName%</code>, <code>%user%</code> - Triggering user's name</li>
+                            <li><code>%msgId%</code> - Message ID for replies</li>
+                            <li><code>%targetUserProfileImageUrl%</code> - User's profile image</li>
+                            <li><code>%firstMessage%</code> - Boolean for first-time chatters</li>
+                            <li><code>%targetUser%</code> - Target user's name</li>
+                            <li><code>%game%</code> - Current game name</li>
+                            <li><code>%inputUserName%</code> - User input from argument</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section"
+                        style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px;">
+                        <h4 style="color: var(--text-main); margin-bottom: 15px;">7. Complete Example</h4>
+                        <pre><code class="language-json">{
+  "meta": {
+    "name": "Welcome Action",
+    "author": "Melty",
+    "version": "1.0.0"
+  },
+  "data": {
+    "actions": [{
+      "id": "action-guid",
+      "name": "First Time Chatter",
+      "group": "Chat",
+      "enabled": true,
+      "queue": "00000000-0000-0000-0000-000000000000",
+      "triggers": [{
+        "id": "trigger-guid",
+        "type": 120,
+        "enabled": true
+      }],
+      "subActions": [
+        {
+          "id": "sub-1",
+          "type": 120,
+          "input": "%firstMessage%",
+          "operation": 0,
+          "value": "false",
+          "index": 0,
+          "parentId": null,
+          "subActions": [
+            {
+              "id": "if-branch",
+              "type": 99901,
+              "parentId": "sub-1",
+              "index": 0,
+              "subActions": [{
+                "id": "msg",
+                "type": 560,
+                "text": "Welcome %userName%!",
+                "replyId": "%msgId%",
+                "parentId": "if-branch",
+                "index": 0
+              }]
+            }
+          ]
+        }
+      ]
+    }]
+  }
+}</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Prism JS -->
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+
+            <script src="app.js"></script>
 </body>
 
 </html>

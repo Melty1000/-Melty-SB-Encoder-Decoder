@@ -8,6 +8,7 @@
     /* Default Accent (Orange) */
     --accent: #ffaa00;
     --accent-glow: rgba(255, 170, 0, 0.4);
+    --accent-dim: rgba(255, 170, 0, 0.15);
 
     --text-main: #ffffff;
     --text-sub: #a0a0a0;
@@ -19,16 +20,19 @@
 .theme-blue {
     --accent: #00aaff;
     --accent-glow: rgba(0, 170, 255, 0.4);
+    --accent-dim: rgba(0, 170, 255, 0.15);
 }
 
 .theme-purple {
     --accent: #aa00ff;
     --accent-glow: rgba(170, 0, 255, 0.4);
+    --accent-dim: rgba(170, 0, 255, 0.15);
 }
 
 .theme-green {
     --accent: #00ffaa;
     --accent-glow: rgba(0, 255, 170, 0.4);
+    --accent-dim: rgba(0, 255, 170, 0.15);
 }
 
 * {
@@ -311,7 +315,7 @@ body {
     border-radius: 16px;
     padding: 30px;
     margin-bottom: 25px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     transform-style: preserve-3d;
 }
 
@@ -328,12 +332,12 @@ body {
     backdrop-filter: blur(15px);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 20px;
+    padding: 20px 25px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
-    text-align: center;
+    justify-content: space-between;
+    text-align: right;
     transition: transform 0.3s;
 }
 
@@ -343,9 +347,15 @@ body {
 }
 
 .stat-card i {
-    font-size: 24px;
+    font-size: 32px;
     color: var(--accent);
-    margin-bottom: 10px;
+    margin-bottom: 0;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
 }
 
 .stat-card span {
@@ -457,31 +467,27 @@ input[type="text"] {
 
 textarea:focus,
 input[type="text"]:focus {
-    outline: none;
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(255, 170, 0, 0.1);
-    background-color: rgba(0, 0, 0, 0.5);
+    outline: none;
+    box-shadow: 0 0 10px var(--accent-dim);
+}
+
+#decoder-input {
+    height: 120px;
 }
 
 /* Buttons */
 .btn {
     padding: 12px 24px;
-    border-radius: 10px;
-    border: none;
+    border-radius: 8px;
     font-weight: 600;
-    font-size: 14px;
     cursor: pointer;
     transition: all 0.2s;
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    font-family: var(--font-main);
-    position: relative;
-    overflow: hidden;
-}
-
-.btn:active {
-    transform: scale(0.96);
+    gap: 8px;
+    border: none;
+    font-size: 14px;
 }
 
 .btn.primary {
@@ -491,39 +497,32 @@ input[type="text"]:focus {
 }
 
 .btn.primary:hover {
-    filter: brightness(1.1);
+    transform: translateY(-2px);
     box-shadow: 0 6px 20px var(--accent-glow);
-    transform: translateY(-1px);
 }
 
 .btn.secondary {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.1);
     color: var(--text-main);
     border: 1px solid var(--border);
 }
 
 .btn.secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
 }
 
 .btn.small {
-    padding: 6px 12px;
+    padding: 8px 16px;
     font-size: 12px;
-    border-radius: 6px;
-    gap: 10px;
 }
 
 .btn.full-width {
     width: 100%;
     justify-content: center;
-    height: 55px;
-    font-size: 16px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
 }
 
-/* Output Area */
+/* Hidden Utility */
 .hidden {
     display: none !important;
 }
@@ -539,16 +538,21 @@ input[type="text"]:focus {
 }
 
 .tab-btn {
-    background: transparent;
-    border: none;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
     color: var(--text-sub);
     padding: 10px 20px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    border-radius: 6px;
-    transition: all 0.2s;
     flex: 1;
+    justify-content: center;
+    text-align: center;
 }
 
 .tab-btn:hover {
@@ -568,13 +572,42 @@ input[type="text"]:focus {
 
 .tab-content.active {
     display: block;
-    animation: fadeIn 0.3s ease;
+    animation: fadeIn 0.3s;
+}
+
+#tab-json {
+    background: #1e1e1e;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    display: none;
+}
+
+#tab-json.active {
+    display: block;
+}
+
+#tab-json pre {
+    margin: 0;
+    padding: 20px;
+    overflow: auto;
+    max-height: 500px;
 }
 
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
     }
 
     to {
@@ -583,37 +616,34 @@ input[type="text"]:focus {
     }
 }
 
-/* Split View (Decoder) */
 .split-view {
-    display: flex;
+    display: grid;
+    grid-template-columns: 300px 1fr;
     gap: 20px;
-    height: 600px;
+    height: 500px;
 }
 
 .list-pane {
-    width: 250px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    border: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-}
-
-.list-actions {
-    padding: 10px;
-    border-top: 1px solid var(--border);
+    overflow: hidden;
 }
 
 .search-box {
-    padding: 15px;
+    padding: 12px 15px;
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     gap: 10px;
+    background: rgba(0, 0, 0, 0.1);
 }
 
 .search-box i {
     color: var(--text-sub);
+    font-size: 14px;
 }
 
 .search-box input {
@@ -621,55 +651,53 @@ input[type="text"]:focus {
     border: none;
     padding: 0;
     height: auto;
+    font-size: 13px;
+    color: var(--text-main);
+    width: 100%;
 }
 
 .search-box input:focus {
     box-shadow: none;
     background: transparent;
+    outline: none;
 }
 
 #script-list {
     list-style: none;
     overflow-y: auto;
     flex: 1;
-    padding: 10px;
 }
 
 #script-list li {
-    padding: 12px 15px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
     cursor: pointer;
     font-size: 13px;
-    border-radius: 8px;
     color: var(--text-sub);
     transition: all 0.2s;
-    margin-bottom: 2px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-#script-list li::before {
-    content: '\f1c9';
-    /* fa-file-code */
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    font-size: 12px;
-    opacity: 0.5;
+    position: relative;
+    animation: fadeInUp 0.3s backwards;
 }
 
 #script-list li:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.03);
     color: var(--text-main);
 }
 
+/* Polished Selection Style (Fixed) */
 #script-list li.selected {
-    background-color: var(--accent);
-    color: #000;
+    background: linear-gradient(90deg, var(--accent-dim), transparent);
+    border-left: 3px solid var(--accent);
+    color: #fff;
     font-weight: 600;
+    padding-left: 17px;
+    /* 20px padding - 3px border */
 }
 
-#script-list li.selected::before {
-    opacity: 1;
+.list-actions {
+    padding: 15px;
+    border-top: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.2);
 }
 
 .code-pane {
@@ -704,39 +732,54 @@ input[type="text"]:focus {
     position: relative;
     flex: 1;
     overflow: hidden;
+    /* Ensure wrapper has dimensions */
 }
 
+/* Force everything to overlap */
+.editor-wrapper pre,
 #code-editor,
 #code-preview {
-    position: absolute;
+    position: absolute !important;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 20px;
-    font-size: 14px;
-    line-height: 1.5;
-    font-family: var(--font-mono);
-    border: none;
-    background: transparent;
-    white-space: pre;
-    overflow: auto;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    border: none !important;
+    box-sizing: border-box !important;
+}
+
+/* Specific Overrides for Prism & Reset */
+.editor-wrapper pre {
+    z-index: 1;
+    background: transparent !important;
+    pointer-events: none;
+    /* Let clicks pass through */
 }
 
 #code-preview {
     z-index: 1;
-    pointer-events: none;
-    /* Let clicks pass through to textarea */
+    background: transparent !important;
+    font-family: var(--font-mono) !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    white-space: pre;
+    overflow: hidden;
+    /* Hide scrollbars on preview, sync via JS */
 }
 
 #code-editor {
     z-index: 2;
+    background: transparent !important;
     color: transparent;
-    /* Hide text but keep cursor */
     caret-color: var(--text-main);
-    background: transparent;
+    font-family: var(--font-mono) !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
     resize: none;
+    overflow: auto;
+    /* Scrollbars on editor */
 }
 
 #code-editor:focus {
@@ -760,6 +803,10 @@ input[type="text"]:focus {
 
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.2);
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
 }
 
 /* Toast Notifications */

@@ -90,7 +90,7 @@ els.themeBtns.forEach(btn => {
         const theme = btn.dataset.theme;
         document.body.className = ''; // Reset
         if (theme !== 'orange') document.body.classList.add(`theme-${theme}`);
-        
+
         // Update particles
         if (themeColors[theme]) state.themeColor = themeColors[theme];
     });
@@ -193,6 +193,7 @@ function onDecodeSuccess(data) {
     updateScriptList();
     updateStats(data);
 
+    triggerConfetti();
     showToast(`Success! Found ${Object.keys(state.extractedScripts).length} scripts.`, 'success');
 }
 
@@ -230,13 +231,16 @@ function updateStats(data) {
         }
     }
 
+    // Handle both root-level and nested 'data' structures
+    const root = data.data || data;
+
     // If root is action
-    if (data.actions) actions = data.actions.length;
-    else if (data.id && data.name) actions = 1; // Single action export
+    if (root.actions) actions = root.actions.length;
+    else if (root.id && root.name) actions = 1; // Single action export
 
     // Triggers are usually inside actions
-    if (data.actions) {
-        data.actions.forEach(a => {
+    if (root.actions) {
+        root.actions.forEach(a => {
             if (a.triggers) triggers += a.triggers.length;
         });
     }
@@ -244,6 +248,42 @@ function updateStats(data) {
     els.statActions.textContent = actions;
     els.statScripts.textContent = Object.keys(state.extractedScripts).length;
     els.statTriggers.textContent = triggers;
+
+    // New Stats
+    let commands = 0;
+    let timedActions = 0;
+    let queues = 0;
+    let subActionsCount = 0;
+
+    if (root.commands) commands = root.commands.length;
+    if (root.timedActions) timedActions = root.timedActions.length;
+    if (root.actionQueues) queues = root.actionQueues.length;
+
+    // Count Sub-Actions (Recursive)
+    if (root.actions) {
+        root.actions.forEach(a => {
+            if (a.subActions) subActionsCount += a.subActions.length;
+            const countNested = (subs) => {
+                if (!subs) return;
+                subs.forEach(s => {
+                    if (s.subActions) {
+                        subActionsCount += s.subActions.length;
+                        countNested(s.subActions);
+                    }
+                });
+            };
+            if (a.subActions) countNested(a.subActions);
+        });
+    }
+
+    // Update DOM
+    const elCommands = document.getElementById('stat-commands');
+    const elTimed = document.getElementById('stat-timed-actions');
+    const elSubActions = document.getElementById('stat-subactions');
+
+    if (elCommands) elCommands.textContent = commands;
+    if (elTimed) elTimed.textContent = timedActions;
+    if (elSubActions) elSubActions.textContent = subActionsCount;
 }
 
 function updateScriptList() {
@@ -261,6 +301,7 @@ function updateScriptList() {
         if (fname.toLowerCase().includes(term)) {
             const li = document.createElement('li');
             li.textContent = fname;
+            li.style.animationDelay = `${index * 0.05}s`;
             li.onclick = () => selectScript(fname, li);
             els.scriptList.appendChild(li);
             if (index === 0) li.click();
@@ -305,51 +346,27 @@ els.btnReEncode.addEventListener('click', () => {
         // Deep copy to avoid mutating original state too much (though we want to update it)
         const data = JSON.parse(JSON.stringify(state.currentJsonData));
 
-        // Inject updated scripts back into JSON
-        // We need to match filenames back to byteCode locations. 
-        // This is tricky because we flattened the scripts.
-        // Strategy: Traverse and re-encode based on order or name? 
-        // Better: When extracting, we should have kept a reference. 
-        // For this "Extreme" demo, we will re-traverse and match by NAME if possible, 
-        // or just rely on the user not renaming things.
-
-        // Actually, let's just re-inject based on the map we have.
-        // We need to find the objects in the JSON that correspond to the scripts.
-        // Since we don't have a direct link, we'll try to match by decoding the byteCode and comparing? Too slow.
-        // Let's assume the user hasn't changed the structure, just the content.
-
         let scriptIndex = 0;
-        const scripts = Object.values(state.extractedScripts); // Order might be preserved
 
-        // This is a weak point in the logic, but sufficient for a demo.
-        // A robust solution would map IDs.
         function injectRecursive(obj) {
             if (typeof obj === 'object' && obj !== null) {
                 if (obj.byteCode && typeof obj.byteCode === 'string') {
                     // We found a script slot. 
-                    // In a real app, we'd use a unique ID. 
-                    // Here, we'll try to find the matching script in our state by name.
-                    // If name is missing, we fallback to index.
-
                     // Try to reconstruct the name logic
-                    // This is imperfect but works for simple cases.
-                    // For now, let's just say "Re-encoding is experimental" in a real app.
-                    // But for the "Extreme" demo, let's try to match by name.
                     let name = obj.name || `script_${scriptIndex}`;
                     const safeName = name.replace(/[^a-zA-Z0-9 _-]/g, '').trim() + '.cs';
 
                     // Find in state
-                    // We need to handle the duplicate naming logic again...
-                    // This is getting complex. 
-                    // SIMPLIFICATION: We will just re-encode the CURRENTLY SELECTED script if we can find where it belongs.
-                    // Actually, let's just iterate and update ALL.
-
-                    // Reverse lookup: find which script in state matches this object's original name?
-                    // Let's just iterate our state and see if we can find a match.
-
                     for (const [fname, content] of Object.entries(state.extractedScripts)) {
-                        // If the filename roughly matches the object name
-                        if (fname.includes(safeName.replace('.cs', ''))) {
+                        const baseName = safeName.replace('.cs', '');
+                        const fnameBase = fname.replace('.cs', '');
+
+                        // Check for exact match
+                        if (fname === safeName) {
+                            obj.byteCode = btoa(content);
+                        }
+                        // Check for indexed match (e.g. Test_1.cs matches Test if we are on the right index?)
+                        else if (fnameBase === baseName) {
                             obj.byteCode = btoa(content);
                         }
                     }
@@ -375,7 +392,14 @@ els.btnReEncode.addEventListener('click', () => {
 
         // Show result
         els.decoderInput.value = result;
-        showToast('Re-Encoded! Input updated.', 'success');
+
+        // Update State & JSON Preview
+        state.currentJsonData = data;
+        els.jsonPreview.textContent = JSON.stringify(data, null, 4);
+        Prism.highlightElement(els.jsonPreview);
+        updateStats(data);
+
+        showToast('Re-Encoded! Input & JSON updated.', 'success');
         triggerConfetti();
 
     } catch (e) {
@@ -528,13 +552,20 @@ function initParticles() {
 }
 
 // --- Utilities ---
+// --- Utilities ---
 function showToast(msg, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    toast.innerHTML = `
-        <i class="fa-solid ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-circle-exclamation' : 'fa-info-circle'}"></i>
-        <span>${msg}</span>
-    `;
+
+    const icon = document.createElement('i');
+    icon.className = `fa-solid ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-circle-exclamation' : 'fa-info-circle'}`;
+
+    const text = document.createElement('span');
+    text.textContent = msg;
+
+    toast.appendChild(icon);
+    toast.appendChild(text);
+
     els.toastContainer.appendChild(toast);
     setTimeout(() => {
         toast.style.animation = 'fadeOut 0.3s forwards';
@@ -552,9 +583,9 @@ document.getElementById('btn-copy-json').onclick = () => {
     showToast('JSON copied', 'success');
 };
 document.getElementById('btn-copy-encoded').onclick = () => {
-    els.encoderOutput.select();
-    document.execCommand('copy');
-    showToast('Import string copied', 'success');
+    navigator.clipboard.writeText(els.encoderOutput.value)
+        .then(() => showToast('Import string copied', 'success'))
+        .catch(() => showToast('Failed to copy', 'error'));
 };
 
 // Tabs
@@ -634,4 +665,18 @@ function injectScriptsRecursive(obj, count = 0) {
         for (const key in obj) count = injectScriptsRecursive(obj[key], count);
     }
     return count;
+}
+
+// Confetti
+function triggerConfetti() {
+    const rgb = state.themeColor.split(',').map(x => parseInt(x.trim()));
+    const hex = '#' + ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1);
+
+    confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: [hex, '#ffffff'],
+        disableForReducedMotion: true
+    });
 }
