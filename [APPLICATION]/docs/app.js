@@ -9,6 +9,31 @@ const state = {
     themeColor: '255, 170, 0' // Default orange RGB
 };
 
+// UTF-8 Safe Base64 Encoding/Decoding for emoji support
+function utf8ToBase64(str) {
+    const utf8Bytes = new TextEncoder().encode(str);
+    const chunks = [];
+    const chunkSize = 0x8000;
+    for (let i = 0; i < utf8Bytes.length; i += chunkSize) {
+        chunks.push(String.fromCharCode.apply(null, utf8Bytes.subarray(i, i + chunkSize)));
+    }
+    return btoa(chunks.join(''));
+}
+
+function base64ToUtf8(base64Str) {
+    try {
+        const binaryString = atob(base64Str);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return new TextDecoder().decode(bytes);
+    } catch (e) {
+        // Fallback to regular atob for backwards compatibility
+        return atob(base64Str);
+    }
+}
+
 // DOM Elements
 const els = {
     navBtns: document.querySelectorAll('.nav-btn[data-target]'),
@@ -23,14 +48,15 @@ const els = {
     scriptList: document.getElementById('script-list'),
 
     // Editor
-    codeEditor: document.getElementById('code-editor'),
-    codePreview: document.getElementById('code-preview'),
     btnReEncode: document.getElementById('btn-re-encode'),
-
-    jsonPreview: document.getElementById('json-preview'),
     scriptSearch: document.getElementById('script-search'),
-    tabBtns: document.querySelectorAll('.tab-btn'),
     tabContents: document.querySelectorAll('.tab-content'),
+
+    // Metadata fields
+    exportName: document.getElementById('export-name'),
+    exportAuthor: document.getElementById('export-author'),
+    exportVersion: document.getElementById('export-version'),
+    exportDescription: document.getElementById('export-description'),
 
     // Stats
     statsDashboard: document.getElementById('stats-dashboard'),
@@ -54,13 +80,167 @@ const els = {
     themeBtns: document.querySelectorAll('.theme-btn'),
     dropOverlay: document.getElementById('drop-overlay'),
     btnDownloadZip: document.getElementById('btn-download-zip'),
-    historyList: document.getElementById('history-list')
+    historyList: document.getElementById('history-list'),
+    historyIconBtn: document.getElementById('history-icon-btn')
+};
+
+// --- JSON Schema for Streamer.bot Export Validation ---
+// Based on Help Guide rules - update this schema when Help Guide changes
+const streamerBotSchema = {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Streamer.bot Export Format",
+    "type": "object",
+    "required": ["meta", "data", "version", "exportedFrom"],
+    "properties": {
+        "meta": {
+            "type": "object",
+            "required": ["name", "author", "version"],
+            "properties": {
+                "name": { "type": "string", "minLength": 1 },
+                "author": { "type": "string" },
+                "version": { "type": "string" }
+            }
+        },
+        "data": {
+            "type": "object",
+            "properties": {
+                "actions": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["id", "name"],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+                                "description": "UUID must be lowercase with hyphens"
+                            },
+                            "name": { "type": "string" },
+                            "group": { "type": "string" },
+                            "enabled": { "type": "boolean" },
+                            "subActions": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+                                        },
+                                        "type": {
+                                            "type": "number",
+                                            "description": "99999 = Execute C# Code"
+                                        },
+                                        "byteCode": {
+                                            "type": "string",
+                                            "description": "For encoder: filename.cs; For import: base64-encoded source"
+                                        },
+                                        "name": { "type": "string" },
+                                        "parentId": {
+                                            "type": ["string", "null"],
+                                            "pattern": "^([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}|null)$"
+                                        },
+                                        "references": {
+                                            "type": "array",
+                                            "items": { "type": "string" }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "commands": { "type": "array" },
+                "timers": { "type": "array" }
+            }
+        },
+        "version": {
+            "type": "number",
+            "minimum": 0
+        },
+        "exportedFrom": {
+            "type": "string"
+        }
+    }
+};
+
+// Monaco editors - will be initialized after Monaco loads
+const monacoEditors = {
+    jsonEditor: null,
+    csharpEditor: null
 };
 
 // --- Initialization ---
 initParticles();
 loadHistory();
 // initTilt(); // Removed 3D effect
+
+// Initialize Monaco Editors when Monaco is loaded
+window.addEventListener('load', async () => {
+    try {
+        // Get containers
+        const jsonContainer = document.getElementById('json-editor-container');
+        const csharpContainer = document.getElementById('csharp-editor-container');
+
+        console.log('Containers found:', jsonContainer, csharpContainer);
+
+        // Load Monaco and define themes FIRST
+        await new Promise((resolve, reject) => {
+            require(['vs/editor/editor.main'], function () {
+                console.log('Monaco loaded, defining themes...');
+                try {
+                    EditorManager.defineCustomThemes();
+                    console.log('Themes defined successfully');
+
+                    // Register CPH autocomplete for C# editor
+                    EditorManager.registerCPHAutocomplete();
+                    console.log('CPH autocomplete registered');
+
+                    resolve();
+                } catch (err) {
+                    console.error('Error defining themes:', err);
+                    reject(err);
+                }
+            });
+        });
+
+        // NOW initialize editors with custom themes
+        console.log('Creating JSON editor...');
+        monacoEditors.jsonEditor = await EditorManager.initializeEditor(
+            jsonContainer,
+            'json',
+            'streamerbot-orange',
+            { readOnly: false }
+        );
+        console.log('JSON editor created:', monacoEditors.jsonEditor);
+
+        // Configure JSON validation with our schema
+        EditorManager.configureJsonValidation(monacoEditors.jsonEditor, streamerBotSchema);
+
+        // Initialize C# editor with orange theme (default)
+        console.log('Creating C# editor...');
+        monacoEditors.csharpEditor = await EditorManager.initializeEditor(
+            csharpContainer,
+            'csharp',
+            'streamerbot-orange',
+            { readOnly: false }
+        );
+        console.log('C# editor created:', monacoEditors.csharpEditor);
+
+        // Add listener to sync Monaco C# editor changes back to state
+        monacoEditors.csharpEditor.onDidChangeModelContent(() => {
+            if (state.currentScript && monacoEditors.csharpEditor) {
+                const code = EditorManager.getEditorValue(monacoEditors.csharpEditor);
+                state.extractedScripts[state.currentScript] = code;
+            }
+        });
+
+        console.log('Monaco editors initialized successfully');
+    } catch (error) {
+        console.error('Failed to initialize Monaco editors:', error);
+        showToast('Monaco Editor failed to load. Please refresh the page.', 'error');
+    }
+});
 
 // --- Navigation ---
 els.navBtns.forEach(btn => {
@@ -93,6 +273,14 @@ els.themeBtns.forEach(btn => {
 
         // Update particles
         if (themeColors[theme]) state.themeColor = themeColors[theme];
+
+        // Sync Monaco editor themes
+        if (monacoEditors.jsonEditor) {
+            EditorManager.syncTheme(monacoEditors.jsonEditor, theme);
+        }
+        if (monacoEditors.csharpEditor) {
+            EditorManager.syncTheme(monacoEditors.csharpEditor, theme);
+        }
     });
 });
 
@@ -141,20 +329,40 @@ document.body.addEventListener('drop', (e) => {
 });
 
 // --- Decoder Logic ---
-els.btnOpenFile.addEventListener('click', () => els.fileUploadDecoder.click());
+if (els.btnOpenFile) {
+    els.btnOpenFile.addEventListener('click', () => els.fileUploadDecoder.click());
+}
 
-els.fileUploadDecoder.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-        els.decoderInput.value = ev.target.result;
-        showToast(`Loaded: ${file.name}`, 'success');
-    };
-    reader.readAsText(file);
-});
+if (els.fileUploadDecoder) {
+    els.fileUploadDecoder.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            els.decoderInput.value = ev.target.result;
+            showToast(`Loaded: ${file.name}`, 'success');
+        };
+        reader.readAsText(file);
+    });
+}
 
-els.btnDecode.addEventListener('click', () => {
+// Helper function to extract proper metadata name from export data
+function getExportName(data) {
+    const root = data.data || data;
+
+    // Try to get name from various possible locations
+    let name = data.meta?.name || data.name || root.name || 'Untitled Export';
+
+    // If it's a single action export, use the action name
+    if (root.actions && root.actions.length === 1) {
+        name = root.actions[0].name || name;
+    }
+
+    return name;
+}
+
+if (els.btnDecode) {
+    els.btnDecode.addEventListener('click', () => {
     const raw = els.decoderInput.value.trim();
     if (!raw) return showToast('Error: Empty input', 'error');
 
@@ -170,28 +378,46 @@ els.btnDecode.addEventListener('click', () => {
 
         onDecodeSuccess(data);
         triggerConfetti();
-        addToHistory(data.name || "Unknown Export", raw);
+        addToHistory(getExportName(data), raw);
 
     } catch (e) {
         console.error(e);
         showToast(`Decode Error: ${e.message}`, 'error');
     }
-});
+    });
+}
 
 function onDecodeSuccess(data) {
     state.currentJsonData = data;
     els.decoderOutputArea.classList.remove('hidden');
     els.statsDashboard.classList.remove('hidden');
 
-    els.jsonPreview.textContent = JSON.stringify(data, null, 4);
-    Prism.highlightElement(els.jsonPreview);
+    // Populate Monaco JSON editor
+    if (monacoEditors.jsonEditor) {
+        const formattedJson = JSON.stringify(data, null, 2);
+        EditorManager.setEditorValue(monacoEditors.jsonEditor, formattedJson);
+    }
 
     // Extract Scripts
     state.extractedScripts = {};
     extractScriptsRecursive(data);
 
+    // Populate Monaco C# editor with first script
+    if (monacoEditors.csharpEditor && Object.keys(state.extractedScripts).length > 0) {
+        const firstScript = Object.values(state.extractedScripts)[0];
+        EditorManager.setEditorValue(monacoEditors.csharpEditor, firstScript);
+        state.currentScript = Object.keys(state.extractedScripts)[0];
+    }
+
+    // Force Monaco to recalculate dimensions now that containers are visible
+    setTimeout(() => {
+        if (monacoEditors.jsonEditor) monacoEditors.jsonEditor.layout();
+        if (monacoEditors.csharpEditor) monacoEditors.csharpEditor.layout();
+    }, 100);
+
     updateScriptList();
     updateStats(data);
+    updateMetadata(data);
 
     triggerConfetti();
     showToast(`Success! Found ${Object.keys(state.extractedScripts).length} scripts.`, 'success');
@@ -201,7 +427,7 @@ function extractScriptsRecursive(obj, count = 0) {
     if (typeof obj === 'object' && obj !== null) {
         if (obj.byteCode && typeof obj.byteCode === 'string') {
             try {
-                const code = atob(obj.byteCode);
+                const code = base64ToUtf8(obj.byteCode);
                 let name = obj.name || `script_${count}`;
                 const safeName = name.replace(/[^a-zA-Z0-9 _-]/g, '').trim() + '.cs';
                 let finalName = safeName;
@@ -276,109 +502,208 @@ function updateStats(data) {
         });
     }
 
+    // Count Groups, WebSocket Servers/Clients
+    let groups = 0;
+    let wsServers = 0;
+    let wsClients = 0;
+
+    if (root.groups) groups = root.groups.length;
+    if (root.webSocketServers) wsServers = root.webSocketServers.length;
+    if (root.webSocketClients) wsClients = root.webSocketClients.length;
+
+    // Check actions for group field
+    if (root.actions) {
+        const groupSet = new Set();
+        root.actions.forEach(a => {
+            if (a.group) groupSet.add(a.group);
+        });
+        groups = Math.max(groups, groupSet.size);
+    }
+
     // Update DOM
     const elCommands = document.getElementById('stat-commands');
     const elTimed = document.getElementById('stat-timed-actions');
     const elSubActions = document.getElementById('stat-subactions');
+    const elQueues = document.getElementById('stat-queues');
+    const elGroups = document.getElementById('stat-groups');
+    const elWsServers = document.getElementById('stat-ws-servers');
+    const elWsClients = document.getElementById('stat-ws-clients');
 
     if (elCommands) elCommands.textContent = commands;
     if (elTimed) elTimed.textContent = timedActions;
     if (elSubActions) elSubActions.textContent = subActionsCount;
+    if (elQueues) elQueues.textContent = queues;
+    if (elGroups) elGroups.textContent = groups;
+    if (elWsServers) elWsServers.textContent = wsServers;
+    if (elWsClients) elWsClients.textContent = wsClients;
+}
+
+function updateMetadata(data) {
+    // Extract metadata from various possible locations in the export structure
+    const root = data.data || data;
+
+    // Try to get name from various possible locations
+    let name = data.name || root.name || 'Untitled Export';
+    if (root.actions && root.actions.length === 1) {
+        name = root.actions[0].name || name;
+    }
+
+    // Author and version might be in meta or root level
+    // IMPORTANT: Check meta.version FIRST because data.version is the export format version (23), not the user version (1.0.0)
+    const author = data.meta?.author || data.author || root.author || 'Unknown';
+    const version = data.meta?.version || root.version || '1.0';
+    const description = data.meta?.description || data.description || root.description || 'No description provided';
+
+    // Populate the fields
+    els.exportName.value = name;
+    els.exportAuthor.value = author;
+    els.exportVersion.value = version;
+    els.exportDescription.value = description;
 }
 
 function updateScriptList() {
-    els.scriptList.innerHTML = '';
     const term = els.scriptSearch.value.toLowerCase();
     const scripts = Object.keys(state.extractedScripts);
 
+    els.scriptList.innerHTML = '';
+
     if (scripts.length === 0) {
-        els.codeEditor.value = "// No scripts found";
-        els.codePreview.textContent = "// No scripts found";
+        if (monacoEditors.csharpEditor) {
+            EditorManager.setEditorValue(monacoEditors.csharpEditor, "// No scripts found");
+        }
         return;
     }
 
+    // Add JSON Data entry at the top with export name
+    const exportName = state.currentJsonData ? getExportName(state.currentJsonData) : 'export';
+    const jsonFileName = `${exportName}.json`;
+    const searchTerm = term.toLowerCase();
+
+    if (jsonFileName.toLowerCase().includes(searchTerm) || 'json data'.includes(searchTerm)) {
+        const jsonLi = document.createElement('li');
+        jsonLi.textContent = jsonFileName;
+        jsonLi.dataset.type = 'json';
+        jsonLi.style.animationDelay = '0s';
+        jsonLi.onclick = () => selectFile('json', jsonLi);
+        els.scriptList.appendChild(jsonLi);
+    }
+
+    // Add C# scripts
     scripts.forEach((fname, index) => {
         if (fname.toLowerCase().includes(term)) {
             const li = document.createElement('li');
             li.textContent = fname;
-            li.style.animationDelay = `${index * 0.05}s`;
-            li.onclick = () => selectScript(fname, li);
+            li.dataset.type = 'csharp';
+            li.dataset.filename = fname;
+            li.style.animationDelay = `${(index + 1) * 0.05}s`;
+            li.onclick = () => selectFile(fname, li);
             els.scriptList.appendChild(li);
-            if (index === 0) li.click();
+            if (index === 0) {
+                li.click();
+            }
         }
     });
 }
 
-function selectScript(fname, liElement) {
+function selectFile(fileIdentifier, liElement) {
+    // Remove selection from all items
     document.querySelectorAll('#script-list li').forEach(l => l.classList.remove('selected'));
     if (liElement) liElement.classList.add('selected');
 
-    state.currentScript = fname;
-    const code = state.extractedScripts[fname];
+    if (fileIdentifier === 'json') {
+        // Switch to JSON Data tab
+        els.tabContents.forEach(c => c.classList.remove('active'));
+        document.getElementById('tab-json').classList.add('active');
 
-    els.codeEditor.value = code;
-    els.codePreview.textContent = code;
-    Prism.highlightElement(els.codePreview);
-}
+        // Layout JSON editor
+        setTimeout(() => {
+            if (monacoEditors.jsonEditor) monacoEditors.jsonEditor.layout();
+        }, 50);
 
-// Editor Sync
-els.codeEditor.addEventListener('input', () => {
-    const code = els.codeEditor.value;
-    els.codePreview.textContent = code;
-    Prism.highlightElement(els.codePreview);
+        state.currentScript = null;
+    } else {
+        // It's a C# script - switch to C# Scripts tab
+        els.tabContents.forEach(c => c.classList.remove('active'));
+        document.getElementById('tab-scripts').classList.add('active');
 
-    // Update state
-    if (state.currentScript) {
-        state.extractedScripts[state.currentScript] = code;
-    }
-});
-
-els.codeEditor.addEventListener('scroll', () => {
-    els.codePreview.scrollTop = els.codeEditor.scrollTop;
-    els.codePreview.scrollLeft = els.codeEditor.scrollLeft;
-});
-
-// Re-Encode Logic
-els.btnReEncode.addEventListener('click', () => {
-    if (!state.currentJsonData) return;
-
-    try {
-        // Deep copy to avoid mutating original state too much (though we want to update it)
-        const data = JSON.parse(JSON.stringify(state.currentJsonData));
-
-        let scriptIndex = 0;
-
-        function injectRecursive(obj) {
-            if (typeof obj === 'object' && obj !== null) {
-                if (obj.byteCode && typeof obj.byteCode === 'string') {
-                    // We found a script slot. 
-                    // Try to reconstruct the name logic
-                    let name = obj.name || `script_${scriptIndex}`;
-                    const safeName = name.replace(/[^a-zA-Z0-9 _-]/g, '').trim() + '.cs';
-
-                    // Find in state
-                    for (const [fname, content] of Object.entries(state.extractedScripts)) {
-                        const baseName = safeName.replace('.cs', '');
-                        const fnameBase = fname.replace('.cs', '');
-
-                        // Check for exact match
-                        if (fname === safeName) {
-                            obj.byteCode = btoa(content);
-                        }
-                        // Check for indexed match (e.g. Test_1.cs matches Test if we are on the right index?)
-                        else if (fnameBase === baseName) {
-                            obj.byteCode = btoa(content);
-                        }
-                    }
-                    scriptIndex++;
-                }
-                for (const key in obj) injectRecursive(obj[key]);
-            }
+        // Update C# editor with selected script
+        state.currentScript = fileIdentifier;
+        const code = state.extractedScripts[fileIdentifier];
+        if (monacoEditors.csharpEditor) {
+            EditorManager.setEditorValue(monacoEditors.csharpEditor, code);
         }
 
-        injectRecursive(data);
+        // Layout C# editor
+        setTimeout(() => {
+            if (monacoEditors.csharpEditor) monacoEditors.csharpEditor.layout();
+        }, 50);
+    }
+}
 
-        // Now Encode
+// Backward compatibility - keep old selectScript name
+function selectScript(fname, liElement) {
+    selectFile(fname, liElement);
+}
+
+// Shared helper function to inject C# scripts back into byteCode
+function injectExtractedScripts(data) {
+    let scriptIndex = 0;
+
+    function injectRecursive(obj) {
+        if (typeof obj === 'object' && obj !== null) {
+            if (obj.byteCode && typeof obj.byteCode === 'string') {
+                let name = obj.name || `script_${scriptIndex}`;
+                const safeName = name.replace(/[^a-zA-Z0-9 _-]/g, '').trim() + '.cs';
+
+                // Find matching script in extracted scripts
+                for (const [fname, content] of Object.entries(state.extractedScripts)) {
+                    const baseName = safeName.replace('.cs', '');
+                    const fnameBase = fname.replace('.cs', '');
+
+                    if (fname === safeName || fnameBase === baseName) {
+                        obj.byteCode = utf8ToBase64(content);
+                    }
+                }
+                scriptIndex++;
+            }
+            for (const key in obj) injectRecursive(obj[key]);
+        }
+    }
+
+    injectRecursive(data);
+}
+
+// Re-Encode Logic (Merged workflow: validate + update stats + encode)
+if (els.btnReEncode) {
+    els.btnReEncode.addEventListener('click', () => {
+    if (!monacoEditors.jsonEditor) {
+        return showToast('Editor not initialized', 'error');
+    }
+
+    try {
+        // Step 1: Get JSON from Monaco editor
+        const jsonContent = EditorManager.getEditorValue(monacoEditors.jsonEditor);
+
+        // Step 2: Parse and validate
+        let editedData;
+        try {
+            editedData = JSON.parse(jsonContent);
+        } catch (parseError) {
+            return showToast(`Invalid JSON: ${parseError.message}`, 'error');
+        }
+
+        // Step 3: Update state with edited JSON
+        state.currentJsonData = editedData;
+
+        // Step 4: Re-run stats and metadata with edited data
+        updateStats(editedData);
+        updateMetadata(editedData);
+
+        // Step 5: Inject C# scripts back into byteCode for encoding
+        const data = JSON.parse(JSON.stringify(editedData)); // Deep copy
+        injectExtractedScripts(data);
+
+        // Step 6: Encode to import string
         const jsonStr = JSON.stringify(data);
         const compressed = pako.gzip(jsonStr);
         const header = new TextEncoder().encode('SBAE');
@@ -386,44 +711,79 @@ els.btnReEncode.addEventListener('click', () => {
         finalData.set(header);
         finalData.set(compressed, header.length);
 
-        let binary = '';
-        for (let i = 0; i < finalData.byteLength; i++) binary += String.fromCharCode(finalData[i]);
+        // Use chunked binary string creation for better performance
+        const chunks = [];
+        for (let i = 0; i < finalData.byteLength; i++) {
+            chunks.push(String.fromCharCode(finalData[i]));
+        }
+        const binary = chunks.join('');
         const result = btoa(binary);
 
-        // Show result
+        // Step 7: Show result in input
         els.decoderInput.value = result;
 
-        // Update State & JSON Preview
-        state.currentJsonData = data;
-        els.jsonPreview.textContent = JSON.stringify(data, null, 4);
-        Prism.highlightElement(els.jsonPreview);
-        updateStats(data);
+        // Step 8: Update Monaco editor with final encoded data (with scripts injected)
+        if (monacoEditors.jsonEditor) {
+            const formattedJson = JSON.stringify(editedData, null, 2);
+            EditorManager.setEditorValue(monacoEditors.jsonEditor, formattedJson);
+        }
 
-        showToast('Re-Encoded! Input & JSON updated.', 'success');
+        showToast('Re-Encoded! Stats updated, import string generated.', 'success');
         triggerConfetti();
 
     } catch (e) {
         showToast('Re-Encode Failed: ' + e.message, 'error');
     }
-});
+    });
+}
 
 // JSZip Download
-els.btnDownloadZip.addEventListener('click', () => {
+// Download ZIP functionality (shared for both tabs)
+const downloadZipHandler = () => {
     if (Object.keys(state.extractedScripts).length === 0) return;
 
     const zip = new JSZip();
+
+    // Get export name for folder and file naming
+    const exportName = state.currentJsonData ? getExportName(state.currentJsonData) : 'export';
+
+    // Sanitize folder name (remove invalid characters)
+    const sanitizedName = exportName.replace(/[<>:"/\\|?*]/g, '_').trim();
+
+    // Create folder in ZIP
+    const folder = zip.folder(sanitizedName);
+
+    // Add all C# scripts to the folder
     for (const [fname, content] of Object.entries(state.extractedScripts)) {
-        zip.file(fname, content);
+        folder.file(fname, content);
+    }
+
+    // Add JSON file to the folder with export name
+    if (state.currentJsonData) {
+        const jsonContent = JSON.stringify(state.currentJsonData, null, 2);
+        folder.file(`${sanitizedName}.json`, jsonContent);
+
+        // Add Streamer.bot import file (.sb)
+        folder.file(`${sanitizedName}.sb`, jsonContent);
     }
 
     zip.generateAsync({ type: "blob" }).then(function (content) {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(content);
-        a.download = "streamerbot_scripts.zip";
+        a.download = `${sanitizedName}.zip`;
         a.click();
-        showToast('ZIP Downloaded!', 'success');
+        showToast(`ZIP Downloaded with Streamer.bot import file: ${sanitizedName}.zip`, 'success');
     });
-});
+};
+
+if (els.btnDownloadZip) {
+    els.btnDownloadZip.addEventListener('click', downloadZipHandler);
+}
+
+// Search box updates the single shared list
+if (els.scriptSearch) {
+    els.scriptSearch.addEventListener('input', updateScriptList);
+}
 
 // --- History ---
 function addToHistory(name, data) {
@@ -575,28 +935,77 @@ function showToast(msg, type = 'info') {
 
 // Copy Buttons
 document.getElementById('btn-copy-code').onclick = () => {
-    navigator.clipboard.writeText(els.codeEditor.value);
+    if (!monacoEditors.csharpEditor) return;
+    const code = EditorManager.getEditorValue(monacoEditors.csharpEditor);
+    navigator.clipboard.writeText(code);
     showToast('Code copied', 'success');
 };
+// Copy JSON button - get from Monaco editor
 document.getElementById('btn-copy-json').onclick = () => {
-    navigator.clipboard.writeText(els.jsonPreview.textContent);
-    showToast('JSON copied', 'success');
+    if (!monacoEditors.jsonEditor) return;
+
+    const jsonContent = EditorManager.getEditorValue(monacoEditors.jsonEditor);
+    if (jsonContent) {
+        navigator.clipboard.writeText(jsonContent);
+        showToast('JSON copied', 'success');
+    }
+};
+
+// Re-Encode button in JSON tab - uses same logic as C# tab Re-Encode
+document.getElementById('btn-re-encode-json').onclick = () => {
+    if (!monacoEditors.jsonEditor) return showToast('Editor not initialized', 'error');
+
+    try {
+        // Step 1: Get JSON from Monaco
+        const jsonContent = EditorManager.getEditorValue(monacoEditors.jsonEditor);
+
+        // Step 2: Validate
+        let editedData;
+        try {
+            editedData = JSON.parse(jsonContent);
+        } catch (parseError) {
+            return showToast(`Invalid JSON: ${parseError.message}`, 'error');
+        }
+
+        // Step 3: Update state
+        state.currentJsonData = editedData;
+
+        // Step 4: Re-run stats and metadata
+        updateStats(editedData);
+        updateMetadata(editedData);
+
+        // Step 5: Inject C# scripts and encode
+        const data = JSON.parse(JSON.stringify(editedData));
+        injectExtractedScripts(data); // Injects base64 scripts with UTF-8 support
+
+        const jsonStr = JSON.stringify(data);
+        const compressed = pako.gzip(jsonStr);
+        const header = new TextEncoder().encode('SBAE');
+        const finalData = new Uint8Array(header.length + compressed.length);
+        finalData.set(header);
+        finalData.set(compressed, header.length);
+
+        // Chunked binary string (performance optimization)
+        const chunks = [];
+        for (let i = 0; i < finalData.byteLength; i++) {
+            chunks.push(String.fromCharCode(finalData[i]));
+        }
+        const binary = chunks.join('');
+        const result = btoa(binary);
+
+        // Step 7: Display result
+        els.decoderInput.value = result;
+
+        showToast('Re-Encoded! Stats updated, import string generated.', 'success');
+    } catch (e) {
+        showToast('Re-Encode Failed: ' + e.message, 'error');
+    }
 };
 document.getElementById('btn-copy-encoded').onclick = () => {
     navigator.clipboard.writeText(els.encoderOutput.value)
         .then(() => showToast('Import string copied', 'success'))
         .catch(() => showToast('Failed to copy', 'error'));
 };
-
-// Tabs
-els.tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        els.tabBtns.forEach(b => b.classList.remove('active'));
-        els.tabContents.forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
-    });
-});
 
 // Encoder Logic (Simplified for brevity, same as before but with Toast)
 els.btnBrowseJson.addEventListener('click', () => els.fileUploadJson.click());
@@ -632,19 +1041,53 @@ els.fileUploadScripts.addEventListener('change', (e) => {
         reader.readAsText(f);
     });
 });
+
 els.btnEncode.addEventListener('click', () => {
     if (!state.encoderJson) return showToast('Select Base JSON first', 'error');
     try {
-        const count = injectScriptsRecursive(state.encoderJson);
-        const jsonStr = JSON.stringify(state.encoderJson);
-        const compressed = pako.gzip(jsonStr);
+        const jsonStr = JSON.stringify(state.encoderJson); // Use the loaded JSON object, not string
+        // But wait, state.encoderJson is an object.
+        // The previous code used state.encoderTemplate? No, state.encoderJson.
+        // Let's check how state.encoderJson is populated.
+        // Line 609: state.encoderJson = JSON.parse(ev.target.result);
+
+        // We need to clone it to avoid modifying the original state if we want to be safe, 
+        // but modifying it in place is fine for this tool.
+        const obj = state.encoderJson;
+
+        // Validation: Check for missing scripts
+        const missingScripts = [];
+        function checkScriptsRecursive(obj) {
+            if (typeof obj === 'object' && obj !== null) {
+                if (obj.byteCode && typeof obj.byteCode === 'string') {
+                    const val = obj.byteCode;
+                    if (val.endsWith('.cs') && !state.encoderScripts[val]) {
+                        missingScripts.push(val);
+                    }
+                }
+                for (const key in obj) checkScriptsRecursive(obj[key]);
+            }
+        }
+        checkScriptsRecursive(obj);
+
+        if (missingScripts.length > 0) {
+            showToast(`Missing scripts: ${missingScripts.join(', ')}`, 'error');
+            return;
+        }
+
+        const count = injectScriptsRecursive(obj);
+        const compressed = pako.gzip(JSON.stringify(obj));
         const header = new TextEncoder().encode('SBAE');
         const finalData = new Uint8Array(header.length + compressed.length);
         finalData.set(header);
         finalData.set(compressed, header.length);
-        let binary = '';
-        for (let i = 0; i < finalData.byteLength; i++) binary += String.fromCharCode(finalData[i]);
-        const result = btoa(binary);
+
+        const chunks = [];
+        const chunkSize = 0x8000;
+        for (let i = 0; i < finalData.length; i += chunkSize) {
+            chunks.push(String.fromCharCode.apply(null, finalData.subarray(i, i + chunkSize)));
+        }
+        const result = btoa(chunks.join(''));
         els.encoderOutputArea.classList.remove('hidden');
         els.encoderOutput.value = result;
         showToast(`Encoded ${count} scripts!`, 'success');
@@ -657,7 +1100,14 @@ function injectScriptsRecursive(obj, count = 0) {
             const val = obj.byteCode;
             if (val.endsWith('.cs')) {
                 if (state.encoderScripts[val]) {
-                    obj.byteCode = btoa(state.encoderScripts[val]);
+                    // UTF-8 safe base64 encoding
+                    const utf8Bytes = new TextEncoder().encode(state.encoderScripts[val]);
+                    const chunks = [];
+                    const chunkSize = 0x8000;
+                    for (let i = 0; i < utf8Bytes.length; i += chunkSize) {
+                        chunks.push(String.fromCharCode.apply(null, utf8Bytes.subarray(i, i + chunkSize)));
+                    }
+                    obj.byteCode = btoa(chunks.join(''));
                     count++;
                 }
             }
@@ -680,3 +1130,125 @@ function triggerConfetti() {
         disableForReducedMotion: true
     });
 }
+
+// Hamburger Menu Toggle
+const hamburgerBtn = document.getElementById('hamburger-btn');
+const sidebar = document.querySelector('.sidebar');
+
+if (hamburgerBtn && sidebar) {
+    hamburgerBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+
+        // Save state to localStorage
+        const isCollapsed = sidebar.classList.contains('collapsed');
+        localStorage.setItem('sidebarCollapsed', isCollapsed);
+    });
+
+    // Restore saved state on load
+    const savedState = localStorage.getItem('sidebarCollapsed');
+    if (savedState === 'true') {
+        sidebar.classList.add('collapsed');
+    }
+}
+
+// Brand Logo Toggle (replaces hamburger button)
+const brandLogo = document.querySelector('.brand');
+if (brandLogo && sidebar) {
+    brandLogo.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+
+        // Save state to localStorage
+        const isCollapsed = sidebar.classList.contains('collapsed');
+        localStorage.setItem('sidebarCollapsed', isCollapsed);
+    });
+}
+
+// History Icon Button - Load Most Recent Export
+const historyIconBtn = document.getElementById('history-icon-btn');
+
+if (historyIconBtn) {
+    historyIconBtn.addEventListener('click', () => {
+        // Check if there's any history
+        if (state.history && state.history.length > 0) {
+            const mostRecent = state.history[0];
+
+            // Load the most recent export into decoder
+            els.decoderInput.value = mostRecent.data;
+
+            // Switch to decoder tab if not already there
+            const decoderTab = document.querySelector('[data-target="decoder"]');
+            if (decoderTab && !decoderTab.classList.contains('active')) {
+                decoderTab.click();
+            }
+
+            // Trigger decode
+            els.btnDecode.click();
+
+            showToast(`Loaded: ${mostRecent.name}`, 'success');
+        } else {
+            showToast('No recent exports available', 'error');
+        }
+    });
+}
+
+// --- Metadata Change Listeners ---
+// Capture and persist metadata field changes back to the JSON data structure
+function setupMetadataListeners() {
+    if (!els.exportName || !els.exportAuthor || !els.exportVersion || !els.exportDescription) return;
+
+    // Helper function to update metadata in the JSON structure
+    function updateMetadataInJson(field, value) {
+        if (!state.currentJsonData) return;
+
+        // Ensure meta object exists
+        if (!state.currentJsonData.meta) {
+            state.currentJsonData.meta = {};
+        }
+
+        // Update both meta and root level for compatibility
+        switch (field) {
+            case 'name':
+                state.currentJsonData.meta.name = value;
+                state.currentJsonData.name = value;
+                break;
+            case 'author':
+                state.currentJsonData.meta.author = value;
+                state.currentJsonData.author = value;
+                break;
+            case 'version':
+                state.currentJsonData.meta.version = value;
+                state.currentJsonData.version = value;
+                break;
+            case 'description':
+                state.currentJsonData.meta.description = value;
+                state.currentJsonData.description = value;
+                break;
+        }
+
+        // Update Monaco JSON editor with the modified data
+        if (monacoEditors.jsonEditor) {
+            const formattedJson = JSON.stringify(state.currentJsonData, null, 2);
+            EditorManager.setEditorValue(monacoEditors.jsonEditor, formattedJson);
+        }
+    }
+
+    // Add input event listeners to all metadata fields
+    els.exportName.addEventListener('input', (e) => {
+        updateMetadataInJson('name', e.target.value);
+    });
+
+    els.exportAuthor.addEventListener('input', (e) => {
+        updateMetadataInJson('author', e.target.value);
+    });
+
+    els.exportVersion.addEventListener('input', (e) => {
+        updateMetadataInJson('version', e.target.value);
+    });
+
+    els.exportDescription.addEventListener('input', (e) => {
+        updateMetadataInJson('description', e.target.value);
+    });
+}
+
+// Initialize metadata listeners
+setupMetadataListeners();
